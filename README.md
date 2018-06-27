@@ -64,11 +64,13 @@ String bssid = AndEsptouchHelper.getInstance(this).getBSSID();
 还有其他例如：打开 关闭wifi  判断是否可用。。。
 
 ### Apk体验
+[apk下载](https://github.com/Rairmmd/AndEsptouch/raw/master/app/release/app-release.apk)
 
-
+![1]
 ### 参考
 [EsptouchForAndroid](https://github.com/EspressifApp/EsptouchForAndroid) 
 https://github.com/EspressifApp/EsptouchForAndroid
 
 [XSmartConfig](https://github.com/xuhongv/XSmartConfig) https://github.com/xuhongv/XSmartConfig
 
+[1]:https://s1.ax1x.com/2018/06/27/PPbQfJ.png
