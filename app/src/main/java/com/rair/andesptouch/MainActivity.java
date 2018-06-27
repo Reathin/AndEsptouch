@@ -46,11 +46,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            Toast.makeText(this, "请输入WiFi密码", Toast.LENGTH_SHORT).show();
 //            return;
 //        }
-        andEsptouch = new AndEsptouch.Builder(this).setBssid(bssid)
-                .setSsid(currentWifiSsid).setPassWord(password).build();
+        andEsptouch = new AndEsptouch.Builder(this).setSsid(currentWifiSsid)
+                .setBssid(bssid).setPassWord(password).build();
         andEsptouch.startEsptouchConfig();
         showProgressDialog("努力配网中...");
-        andEsptouch.setOnEsptouchTaskListener(this);
+        andEsptouch.setOnEsptouchTaskListener(new AndEsptouch.OnEsptouchTaskListener() {
+            @Override
+            public void onEsptouchTaskCallback(int code, String message) {
+                Log.d(TAG, "code:" + code + "\nmessage:" + message);
+                dismissProgressDialog();
+                if (code == AndEsptouch.RESULT_CONFIG_SUCCESS) {
+                    Toast.makeText(MainActivity.this, "配网成功", Toast.LENGTH_SHORT).show();
+                } else if (code == AndEsptouch.RESULT_CONFIG_TIMEOUT) {
+                    Toast.makeText(MainActivity.this, "配网超时", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "配网失败", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     @Override
