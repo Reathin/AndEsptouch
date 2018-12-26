@@ -1,6 +1,5 @@
 package com.rairmmd.andesptouch.protocol;
 
-
 import com.rairmmd.andesptouch.task.IEsptouchGenerator;
 import com.rairmmd.andesptouch.util.ByteUtil;
 

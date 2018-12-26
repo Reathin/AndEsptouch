@@ -7,6 +7,8 @@ import android.os.Handler.Callback;
 import android.os.Message;
 import android.util.Log;
 
+import com.rairmmd.andesptouch.util.ByteUtil;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -131,7 +133,11 @@ public class AndEsptouch implements Callback {
     public void startEsptouchConfig() {
         Log.d(TAG, "start esptouch config");
         mEsptouchTaskTemp = new IEsp8266TouchTask();
-        mEsptouchTaskTemp.execute(mSsid, mBssid, mPassword, Integer.toString(mDeviceCount));
+        byte[] ssid = ByteUtil.getBytesByString(mSsid);
+        byte[] bssid = ByteUtil.getBytesByString(mBssid);
+        byte[] password = ByteUtil.getBytesByString(mPassword);
+        byte[] count = ByteUtil.getBytesByString(String.valueOf(mDeviceCount));
+        mEsptouchTaskTemp.execute(ssid, bssid, password, count);
         isUDPReceive = false;
     }
 
@@ -144,7 +150,11 @@ public class AndEsptouch implements Callback {
     public void startEsptouchConfig(int timesOut, int port) {
         Log.d(TAG, "start esptouch config");
         mEsptouchTaskTemp = new IEsp8266TouchTask();
-        mEsptouchTaskTemp.execute(mSsid, mBssid, mPassword, Integer.toString(mDeviceCount));
+        byte[] ssid = ByteUtil.getBytesByString(mSsid);
+        byte[] bssid = ByteUtil.getBytesByString(mBssid);
+        byte[] password = ByteUtil.getBytesByString(mPassword);
+        byte[] count = ByteUtil.getBytesByString(String.valueOf(mDeviceCount));
+        mEsptouchTaskTemp.execute(ssid, bssid, password, count);
         isUDPReceive = true;
         this.timesOut = timesOut;
         this.mPort = port;
@@ -176,11 +186,9 @@ public class AndEsptouch implements Callback {
          * 回调
          */
         void onEsptouchTaskCallback(int code, String message);
-
-
     }
 
-    private class IEsp8266TouchTask extends AsyncTask<String, Void, List<IEsptouchResult>> {
+    private class IEsp8266TouchTask extends AsyncTask<byte[], Void, List<IEsptouchResult>> {
 
         private IEsp8266TouchTask() {
 
@@ -196,15 +204,16 @@ public class AndEsptouch implements Callback {
         }
 
         @Override
-        protected List<IEsptouchResult> doInBackground(String... params) {
-            int taskResultCount = -1;
+        protected List<IEsptouchResult> doInBackground(byte[]... params) {
+            int taskResultCount;
             synchronized (mLock) {
-                String apSsid = params[0];
-                String apBssid = params[1];
-                String apPassword = params[2];
-                String taskResultCountStr = params[3];
-                taskResultCount = Integer.parseInt(taskResultCountStr);
+                byte[] apSsid = params[0];
+                byte[] apBssid = params[1];
+                byte[] apPassword = params[2];
+                byte[] deviceCount = params[3];
+                taskResultCount = deviceCount.length == 0 ? -1 : Integer.parseInt(new String(deviceCount));
                 mEsptouchTask = new EsptouchTask(apSsid, apBssid, apPassword, mContext);
+                mEsptouchTask.setPackageBroadcast(true);
                 mEsptouchTask.setEsptouchListener(new IEsptouchListener() {
 
                     @Override

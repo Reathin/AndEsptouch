@@ -16,7 +16,8 @@ public class EspNetUtil {
      * @return the local ip addr allocated by Ap
      */
     public static InetAddress getLocalInetAddress(Context context) {
-        WifiManager wm = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiManager wm = (WifiManager) context
+                .getSystemService(Context.WIFI_SERVICE);
         WifiInfo wifiInfo = wm.getConnectionInfo();
         int localAddrInt = wifiInfo.getIpAddress();
         String localAddrStr = __formatString(localAddrInt);

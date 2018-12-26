@@ -12,7 +12,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class EspAES {
-
     private static final String TRANSFORMATION_DEFAULT = "AES/ECB/PKCS5Padding";
 
     private final byte[] mKey;

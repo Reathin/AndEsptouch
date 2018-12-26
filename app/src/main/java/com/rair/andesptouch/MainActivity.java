@@ -3,6 +3,7 @@ package com.rair.andesptouch;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -11,6 +12,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.rair.andesptouch.utils.SPUtils;
 import com.rairmmd.andesptouch.AndEsptouch;
 import com.rairmmd.andesptouch.AndEsptouchHelper;
 
@@ -20,6 +22,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private AndEsptouch andEsptouch;
     private final String TAG = "Rairmmd";
     private ProgressDialog progressDialog;
+    private CountDownTimer countDownTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +38,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnConnect.setOnClickListener(this);
         String currentWifiSsid = AndEsptouchHelper.getInstance(this).getCurrentWifiSsid();
         tvSsid.setText(String.format("当前WiFi：%s", currentWifiSsid));
+        String password = SPUtils.getInstance().getString("password", "");
+        etPassword.setText(password);
     }
 
     @Override
@@ -42,28 +47,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String currentWifiSsid = AndEsptouchHelper.getInstance(this).getCurrentWifiSsid();
         String bssid = AndEsptouchHelper.getInstance(this).getBSSID();
         String password = etPassword.getText().toString().trim();
-//        if (TextUtils.isEmpty(password)) {
-//            Toast.makeText(this, "请输入WiFi密码", Toast.LENGTH_SHORT).show();
-//            return;
-//        }
+        SPUtils.getInstance().put("password", password);
         andEsptouch = new AndEsptouch.Builder(this).setSsid(currentWifiSsid)
                 .setBssid(bssid).setPassWord(password).build();
         andEsptouch.startEsptouchConfig();
-        showProgressDialog("努力配网中...");
-        andEsptouch.setOnEsptouchTaskListener(new AndEsptouch.OnEsptouchTaskListener() {
-            @Override
-            public void onEsptouchTaskCallback(int code, String message) {
-                Log.d(TAG, "code:" + code + "\nmessage:" + message);
-                dismissProgressDialog();
-                if (code == AndEsptouch.RESULT_CONFIG_SUCCESS) {
-                    Toast.makeText(MainActivity.this, "配网成功", Toast.LENGTH_SHORT).show();
-                } else if (code == AndEsptouch.RESULT_CONFIG_TIMEOUT) {
-                    Toast.makeText(MainActivity.this, "配网超时", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(MainActivity.this, "配网失败", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        andEsptouch.setOnEsptouchTaskListener(this);
+        if (countDownTimer != null) {
+            countDownTimer = null;
+        }
+        startCountDown();
     }
 
     @Override
@@ -77,6 +69,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             Toast.makeText(this, "配网失败", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void startCountDown() {
+        showProgressDialog("努力配网中...");
+        countDownTimer = new CountDownTimer(20000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                Log.d("Rair", "onTick:" + millisUntilFinished);
+            }
+
+            @Override
+            public void onFinish() {
+                Log.d("Rair", "onFinish");
+                dismissProgressDialog();
+            }
+        };
     }
 
     private void showProgressDialog(String message) {

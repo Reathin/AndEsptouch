@@ -152,6 +152,7 @@ public class __EsptouchTask implements __IEsptouchTask {
 
     private void __listenAsyn(final int expectDataLen) {
         mTask = new Thread() {
+            @Override
             public void run() {
                 if (__IEsptouchTask.DEBUG) {
                     Log.d(TAG, "__listenAsyn() start");

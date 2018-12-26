@@ -1,1 +1,1 @@
-include ':app', ':andesptouch'
+include ':app', ':andesptouch', ':lib_esptouch'

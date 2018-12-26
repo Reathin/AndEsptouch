@@ -12,7 +12,6 @@ import com.rairmmd.andesptouch.util.EspNetUtil;
 import java.util.List;
 
 public class EsptouchTask implements IEsptouchTask {
-
     public __EsptouchTask _mEsptouchTask;
     private EsptouchTaskParameter _mParameter;
 
@@ -34,7 +33,7 @@ public class EsptouchTask implements IEsptouchTask {
      * @param apSsid     the Ap's ssid
      * @param apBssid    the Ap's bssid
      * @param apPassword the Ap's password
-     * @param espAES     AES secret key and iv
+     * @param espAES     AES secret key
      * @param context    the Context of the Application
      */
     public EsptouchTask(String apSsid, String apBssid, String apPassword, EspAES espAES, Context context) {
@@ -51,6 +50,10 @@ public class EsptouchTask implements IEsptouchTask {
         TouchData bssid = new TouchData(EspNetUtil.parseBssid2bytes(apBssid));
         TouchData password = new TouchData(apPassword);
         init(context, ssid, bssid, password, espAES);
+    }
+
+    public EsptouchTask(byte[] apSsid, byte[] apBssid, byte[] apPassword, Context context) {
+        this(apSsid, apBssid, apPassword, null, context);
     }
 
     public EsptouchTask(byte[] apSsid, byte[] apBssid, byte[] apPassword, EspAES espAES, Context context) {
@@ -101,5 +104,10 @@ public class EsptouchTask implements IEsptouchTask {
     @Override
     public void setEsptouchListener(IEsptouchListener esptouchListener) {
         _mEsptouchTask.setEsptouchListener(esptouchListener);
+    }
+
+    @Override
+    public void setPackageBroadcast(boolean broadcast) {
+        _mParameter.setBroadcast(broadcast);
     }
 }
