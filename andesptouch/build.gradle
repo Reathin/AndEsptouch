@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven'
 
 def siteUrl = 'https://github.com/Rairmmd/AndEsptouch'
 def gitUrl = 'https://github.com/Rairmmd/AndEsptouch.git'
@@ -10,13 +10,13 @@ group = "com.rairmmd"
 version = "1.0.1"
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 27
+        targetSdkVersion 28
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.1"
     }
 
     buildTypes {
@@ -32,6 +32,20 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
 
+//uploadArchives {
+//    repositories.mavenDeployer {
+//        repository(url: "http://192.168.9.18:8081/nexus/content/repositories/releases/") {
+//            authentication(userName: "admin", password: "admin123")
+//        }
+//        pom.project {
+//            name 'AndEsptouch'
+//            groupId 'com.rairmmd'
+//            artifactId 'andesptouch'
+//            version '1.0.1'
+//        }
+//    }
+//}
+
 install {
     repositories.mavenInstaller {
         pom {
@@ -40,7 +54,6 @@ install {
                 name 'AndEsptouch'
                 description 'Esptouch for Android'
                 url siteUrl
-                //开源协议
                 licenses {
                     license {
                         name 'The Apache Software License, Version 2.0'
@@ -66,6 +79,7 @@ install {
         }
     }
 }
+
 //配置源码
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs

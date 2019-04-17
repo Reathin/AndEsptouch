@@ -132,6 +132,7 @@ public class AndEsptouch implements Callback {
      */
     public void startEsptouchConfig() {
         Log.d(TAG, "start esptouch config");
+        stopEsptouchConfig();
         mEsptouchTaskTemp = new IEsp8266TouchTask();
         byte[] ssid = ByteUtil.getBytesByString(mSsid);
         byte[] bssid = ByteUtil.getBytesByString(mBssid);

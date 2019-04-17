@@ -12,7 +12,7 @@ import com.rairmmd.andesptouch.util.EspNetUtil;
 import java.util.List;
 
 public class EsptouchTask implements IEsptouchTask {
-    public __EsptouchTask _mEsptouchTask;
+    private __EsptouchTask _mEsptouchTask;
     private EsptouchTaskParameter _mParameter;
 
     /**
@@ -21,7 +21,7 @@ public class EsptouchTask implements IEsptouchTask {
      * @param apSsid     the Ap's ssid
      * @param apBssid    the Ap's bssid
      * @param apPassword the Ap's password
-     * @param context    the Context of the Application
+     * @param context    the {@link Context} of the Application
      */
     public EsptouchTask(String apSsid, String apBssid, String apPassword, Context context) {
         this(apSsid, apBssid, apPassword, null, context);
@@ -33,10 +33,13 @@ public class EsptouchTask implements IEsptouchTask {
      * @param apSsid     the Ap's ssid
      * @param apBssid    the Ap's bssid
      * @param apPassword the Ap's password
-     * @param espAES     AES secret key
-     * @param context    the Context of the Application
+     * @param context    the {@link Context} of the Application
      */
-    public EsptouchTask(String apSsid, String apBssid, String apPassword, EspAES espAES, Context context) {
+    public EsptouchTask(byte[] apSsid, byte[] apBssid, byte[] apPassword, Context context) {
+        this(apSsid, apBssid, apPassword, null, context);
+    }
+
+    private EsptouchTask(String apSsid, String apBssid, String apPassword, EspAES espAES, Context context) {
         if (TextUtils.isEmpty(apSsid)) {
             throw new NullPointerException("SSID can't be empty");
         }
@@ -52,11 +55,7 @@ public class EsptouchTask implements IEsptouchTask {
         init(context, ssid, bssid, password, espAES);
     }
 
-    public EsptouchTask(byte[] apSsid, byte[] apBssid, byte[] apPassword, Context context) {
-        this(apSsid, apBssid, apPassword, null, context);
-    }
-
-    public EsptouchTask(byte[] apSsid, byte[] apBssid, byte[] apPassword, EspAES espAES, Context context) {
+    private EsptouchTask(byte[] apSsid, byte[] apBssid, byte[] apPassword, EspAES espAES, Context context) {
         if (apSsid == null || apSsid.length == 0) {
             throw new NullPointerException("SSID can't be empty");
         }
