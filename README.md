@@ -4,7 +4,7 @@
 
 #### 集成
 ```
-implementation 'com.rairmmd:andesptouch:1.0.1'
+implementation 'com.rairmmd:andesptouch:1.0.0'
 ```
 #### 需要的权限
 需要一下权限，库文件中已添加好了。
