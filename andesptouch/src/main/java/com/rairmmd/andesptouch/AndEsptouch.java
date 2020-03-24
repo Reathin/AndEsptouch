@@ -8,6 +8,7 @@ import android.os.Message;
 import android.util.Log;
 
 import com.rairmmd.andesptouch.util.ByteUtil;
+import com.rairmmd.andesptouch.util.TouchNetUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,7 +26,6 @@ import java.util.TimerTask;
 
 /**
  * @author Rair
- * @date 2018/6/27
  * <p>
  * desc:
  */
@@ -135,7 +135,7 @@ public class AndEsptouch implements Callback {
         stopEsptouchConfig();
         mEsptouchTaskTemp = new IEsp8266TouchTask();
         byte[] ssid = ByteUtil.getBytesByString(mSsid);
-        byte[] bssid = ByteUtil.getBytesByString(mBssid);
+        byte[] bssid = TouchNetUtil.parseBssid2bytes(mBssid);
         byte[] password = ByteUtil.getBytesByString(mPassword);
         byte[] count = ByteUtil.getBytesByString(String.valueOf(mDeviceCount));
         mEsptouchTaskTemp.execute(ssid, bssid, password, count);
@@ -152,7 +152,7 @@ public class AndEsptouch implements Callback {
         Log.d(TAG, "start esptouch config");
         mEsptouchTaskTemp = new IEsp8266TouchTask();
         byte[] ssid = ByteUtil.getBytesByString(mSsid);
-        byte[] bssid = ByteUtil.getBytesByString(mBssid);
+        byte[] bssid = TouchNetUtil.parseBssid2bytes(mBssid);
         byte[] password = ByteUtil.getBytesByString(mPassword);
         byte[] count = ByteUtil.getBytesByString(String.valueOf(mDeviceCount));
         mEsptouchTaskTemp.execute(ssid, bssid, password, count);

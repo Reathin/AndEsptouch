@@ -2,7 +2,6 @@ package com.rairmmd.andesptouch;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
@@ -131,25 +130,6 @@ public class AndEsptouchHelper {
     }
 
     /**
-     * 扫描网络
-     */
-    public void startScan() {
-        wifiManager.startScan();
-        // 扫描返回结果列表
-        scanResultList = wifiManager.getScanResults();
-        // 扫描配置列表
-        wifiConfigList = wifiManager.getConfiguredNetworks();
-    }
-
-    public List<ScanResult> getWifiList() {
-        return scanResultList;
-    }
-
-    public List<WifiConfiguration> getWifiConfigList() {
-        return wifiConfigList;
-    }
-
-    /**
      * 获取扫描WIFI列表的信息
      */
     public String lookupScanInfo() {
@@ -171,38 +151,6 @@ public class AndEsptouchHelper {
             scanBuilder.append("\n");
         }
         return scanBuilder.toString();
-    }
-
-    /**
-     * 获取指定Wifi的ssid名称
-     *
-     * @param netId 网络id 一般从获取的列表取
-     */
-    public String getSSID(int netId) {
-        return scanResultList.get(netId).SSID;
-    }
-
-    /**
-     * 获取指定Wifi的物理地址
-     *
-     * @param netId 网络id 一般从获取的列表取
-     */
-    public String getBSSID(int netId) {
-        return scanResultList.get(netId).BSSID;
-    }
-
-    /**
-     * 获取指定Wifi的频率
-     */
-    public int getFrequency(int netId) {
-        return scanResultList.get(netId).frequency;
-    }
-
-    /**
-     * 获取指定Wifi的功能
-     */
-    public String getCapabilities(int netId) {
-        return scanResultList.get(netId).capabilities;
     }
 
     /**
@@ -316,13 +264,5 @@ public class AndEsptouchHelper {
         } else {
             return ssid;
         }
-    }
-
-    /**
-     * 是否存在有效的WIFI连接
-     */
-    public boolean isWifiConnected(Context context) {
-        NetworkInfo networkInfo = connectManager.getActiveNetworkInfo();
-        return networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_WIFI && networkInfo.isConnected();
     }
 }

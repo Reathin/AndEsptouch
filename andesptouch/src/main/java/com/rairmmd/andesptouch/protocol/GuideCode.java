@@ -1,6 +1,5 @@
 package com.rairmmd.andesptouch.protocol;
 
-
 import com.rairmmd.andesptouch.task.ICodeData;
 import com.rairmmd.andesptouch.util.ByteUtil;
 

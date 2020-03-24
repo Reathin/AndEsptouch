@@ -48,6 +48,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String bssid = AndEsptouchHelper.getInstance(this).getBSSID();
         String password = etPassword.getText().toString().trim();
         SPUtils.getInstance().put("password", password);
+        Log.i(TAG, "(MainActivity.java:51)-onClick:->"+currentWifiSsid);
+        Log.i(TAG, "(MainActivity.java:51)-onClick:->"+bssid);
+        Log.i(TAG, "(MainActivity.java:51)-onClick:->"+password);
         andEsptouch = new AndEsptouch.Builder(this).setSsid(currentWifiSsid)
                 .setBssid(bssid).setPassWord(password).build();
         andEsptouch.startEsptouchConfig();
