@@ -2,41 +2,33 @@ package com.rairmmd.andesptouch;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.CountDownTimer;
 import android.os.Handler;
-import android.os.Handler.Callback;
 import android.os.Message;
 import android.util.Log;
 
 import com.rairmmd.andesptouch.util.ByteUtil;
 import com.rairmmd.andesptouch.util.TouchNetUtil;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.util.Iterator;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * @author Rair
  * <p>
  * desc:
  */
-public class AndEsptouch implements Callback {
+public class AndEsptouch implements Handler.Callback {
 
     private final String TAG = "AndEsptouch";
 
-    private IEsp8266TouchTask mEsptouchTaskTemp;
-
-    private IEsptouchTask mEsptouchTask;
-
+    /**
+     * 上下文
+     */
     private Context mContext;
 
     /**
@@ -58,51 +50,64 @@ public class AndEsptouch implements Callback {
     private int mDeviceCount = 1;
 
     /**
+     * 是否广播   反之为组播
+     */
+    private boolean isBroadcast = true;
+
+    /**
+     * 自定义upd回调
+     */
+    private boolean isCustomUdpReceiver;
+
+    /**
      * 端口
      */
-    private int mPort = 8686;
+    private int mPort = 12306;
 
-    private OnEsptouchTaskListener listener;
+    /**
+     * 自定义的配置异步任务
+     */
+    private EsptouchAsyncTask mEsptouchAsyncTask;
 
-    private boolean isUDPReceive = false;
-    private boolean isReceive = true;
-    private boolean isUDPReceiveFail = true;
+    /**
+     * 配置任务
+     */
+    private IEsptouchTask mEsptouchTask;
 
-    private int timesOut;
+    private OnEsptouchTaskListener onEsptouchTaskListener;
 
-    private Thread mThread;
+    private int mTimeOut;
 
-    private Selector selector = null;
-    private DatagramChannel channel = null;
     private Handler mHandler;
 
+    private CountDownTimer mCountDownTimer;
 
     private AndEsptouch(Context mContext) {
         this.mContext = mContext;
-        this.mHandler = new Handler(this);
+        mHandler = new Handler(mContext.getMainLooper(), this);
     }
 
     public static class Builder {
 
-        private AndEsptouch mAndEsptouch;
+        private AndEsptouch andEsptouch;
 
         public Builder(Context mContext) {
-            mAndEsptouch = new AndEsptouch(mContext);
+            andEsptouch = new AndEsptouch(mContext);
         }
 
         /**
          * @param ssid 设置路由器名字
          */
-        public Builder setSsid(String ssid) {
-            mAndEsptouch.mSsid = ssid;
+        public Builder setSSID(String ssid) {
+            andEsptouch.mSsid = ssid;
             return this;
         }
 
         /**
          * 设置bssid
          */
-        public Builder setBssid(String bssid) {
-            mAndEsptouch.mBssid = bssid;
+        public Builder setBSSID(String bssid) {
+            andEsptouch.mBssid = bssid;
             return this;
         }
 
@@ -110,7 +115,7 @@ public class AndEsptouch implements Callback {
          * @param passWord 设置路由器密码
          */
         public Builder setPassWord(String passWord) {
-            mAndEsptouch.mPassword = passWord;
+            andEsptouch.mPassword = passWord;
             return this;
         }
 
@@ -118,89 +123,107 @@ public class AndEsptouch implements Callback {
          * @param deviceCount 设置要配对的设备个数
          */
         public Builder setDeviceCount(int deviceCount) {
-            mAndEsptouch.mDeviceCount = deviceCount;
+            andEsptouch.mDeviceCount = deviceCount;
+            return this;
+        }
+
+        /**
+         * 是否广播
+         */
+        public Builder isBroadcast(boolean broadcast) {
+            andEsptouch.isBroadcast = broadcast;
+            return this;
+        }
+
+        /**
+         * 是否需要自定义udp消息
+         */
+        public Builder isCustomUdpReceiver(boolean isCustom) {
+            andEsptouch.isCustomUdpReceiver = isCustom;
             return this;
         }
 
         public AndEsptouch build() {
-            return mAndEsptouch;
+            return andEsptouch;
         }
+    }
+
+    public void setOnEsptouchTaskListener(OnEsptouchTaskListener listener) {
+        this.onEsptouchTaskListener = listener;
+    }
+
+    public interface OnEsptouchTaskListener {
+
+        /**
+         * 配置回调code  message
+         *
+         * @param code    错误码
+         * @param message 消息
+         */
+        void onEsptouchTaskCallback(int code, String message);
     }
 
     /**
      * 不接受自定义广播包开始配置
      */
-    public void startEsptouchConfig() {
+    public void startConfig() {
         Log.d(TAG, "start esptouch config");
-        stopEsptouchConfig();
-        mEsptouchTaskTemp = new IEsp8266TouchTask();
+        stopConfig();
+        mEsptouchAsyncTask = new EsptouchAsyncTask();
         byte[] ssid = ByteUtil.getBytesByString(mSsid);
         byte[] bssid = TouchNetUtil.parseBssid2bytes(mBssid);
         byte[] password = ByteUtil.getBytesByString(mPassword);
         byte[] count = ByteUtil.getBytesByString(String.valueOf(mDeviceCount));
-        mEsptouchTaskTemp.execute(ssid, bssid, password, count);
-        isUDPReceive = false;
+        mEsptouchAsyncTask.execute(ssid, bssid, password, count);
     }
 
     /**
      * 设置为配网模式+接受此设备UDP信息
      *
-     * @param timesOut 设置超时时间
+     * @param timesOut 设置超时时间 秒
      * @param port     设置UDP本地的端口
      */
-    public void startEsptouchConfig(int timesOut, int port) {
+    public void startConfig(int timesOut, int port) {
         Log.d(TAG, "start esptouch config");
-        mEsptouchTaskTemp = new IEsp8266TouchTask();
+        stopConfig();
+        mEsptouchAsyncTask = new EsptouchAsyncTask();
         byte[] ssid = ByteUtil.getBytesByString(mSsid);
         byte[] bssid = TouchNetUtil.parseBssid2bytes(mBssid);
         byte[] password = ByteUtil.getBytesByString(mPassword);
         byte[] count = ByteUtil.getBytesByString(String.valueOf(mDeviceCount));
-        mEsptouchTaskTemp.execute(ssid, bssid, password, count);
-        isUDPReceive = true;
-        this.timesOut = timesOut;
+        mEsptouchAsyncTask.execute(ssid, bssid, password, count);
+        this.mTimeOut = timesOut;
         this.mPort = port;
     }
 
     /**
      * 停止配置
      */
-    public void stopEsptouchConfig() {
+    public void stopConfig() {
         Log.d(TAG, "stop esptouch config");
         if (mEsptouchTask != null) {
             mEsptouchTask.interrupt();
+            mEsptouchTask = null;
         }
-        isReceive = false;
-        if (mThread != null && channel != null) {
-            mThread.interrupt();
-            channel.socket().disconnect();
-            channel.socket().close();
+        if (mCountDownTimer != null) {
+            mCountDownTimer.cancel();
+            mCountDownTimer = null;
+        }
+        if (mEsptouchAsyncTask != null) {
+            mEsptouchAsyncTask = null;
         }
     }
 
-    public void setOnEsptouchTaskListener(OnEsptouchTaskListener listener) {
-        this.listener = listener;
-    }
-
-    public interface OnEsptouchTaskListener {
-
-        /**
-         * 回调
-         */
-        void onEsptouchTaskCallback(int code, String message);
-    }
-
-    private class IEsp8266TouchTask extends AsyncTask<byte[], Void, List<IEsptouchResult>> {
-
-        private IEsp8266TouchTask() {
-
-        }
+    private class EsptouchAsyncTask extends AsyncTask<byte[], IEsptouchResult, List<IEsptouchResult>> {
 
         private final Object mLock = new Object();
 
         @Override
         protected void onPreExecute() {
-            if (mEsptouchTask != null) {
-                mEsptouchTask.interrupt();
+            synchronized (mLock) {
+                if (mEsptouchTask != null) {
+                    mEsptouchTask.interrupt();
+                }
             }
         }
 
@@ -208,33 +231,24 @@ public class AndEsptouch implements Callback {
         protected List<IEsptouchResult> doInBackground(byte[]... params) {
             int taskResultCount;
             synchronized (mLock) {
-                byte[] apSsid = params[0];
-                byte[] apBssid = params[1];
-                byte[] apPassword = params[2];
+                byte[] ssid = params[0];
+                byte[] bssid = params[1];
+                byte[] password = params[2];
                 byte[] deviceCount = params[3];
                 taskResultCount = deviceCount.length == 0 ? -1 : Integer.parseInt(new String(deviceCount));
-                mEsptouchTask = new EsptouchTask(apSsid, apBssid, apPassword, mContext);
-                mEsptouchTask.setPackageBroadcast(true);
+                mEsptouchTask = new EsptouchTask(ssid, bssid, password, mContext);
+                mEsptouchTask.setPackageBroadcast(isBroadcast);
                 mEsptouchTask.setEsptouchListener(new IEsptouchListener() {
-
                     @Override
                     public void onEsptouchResultAdded(IEsptouchResult result) {
-                        Log.d(TAG, "esptouch config result" + result.getInetAddress().toString());
-                        if (listener != null) {
-                            JSONObject jsonObject = new JSONObject();
-                            try {
-                                jsonObject.put("mac", result.getBssid());
-                                jsonObject.put("ip", result.getInetAddress().getHostAddress());
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                            Message message = new Message();
-                            message.what = 108;
-                            message.obj = jsonObject.toString();
-                            mHandler.sendMessage(message);
-                            if (isUDPReceive) {
-                                startUDPRecieve(result.getBssid(), result.getInetAddress().getHostAddress());
-                            }
+                        Log.d(TAG, "esptouch config result:" + result.getInetAddress().toString());
+                        String resultMsg = String.format("BSSID:%s-IP:%s", result.getBssid(), result.getInetAddress().getHostName());
+                        Message message = Message.obtain();
+                        message.what = RESULT_CONFIG_SUCCESS;
+                        message.obj = resultMsg;
+                        mHandler.sendMessage(message);
+                        if (isCustomUdpReceiver) {
+                            startReceiverData(result.getInetAddress().getHostAddress());
                         }
                     }
                 });
@@ -244,141 +258,109 @@ public class AndEsptouch implements Callback {
 
         @Override
         protected void onPostExecute(List<IEsptouchResult> iEsptouchResults) {
-            IEsptouchResult firstResult = iEsptouchResults.get(0);
-            if (!firstResult.isCancelled()) {
-                String macAddress = null;
-                String ipAddress = null;
-                int count = 0;
-                final int maxDisplayCount = 5;
-                if (firstResult.isSuc()) {
-                    JSONObject jsonObject = new JSONObject();
-                    for (IEsptouchResult resultInList : iEsptouchResults) {
-                        try {
-                            jsonObject.put("mac", resultInList.getBssid());
-                            jsonObject.put("ip", resultInList.getInetAddress().getHostAddress());
-                            macAddress = resultInList.getBssid();
-                            ipAddress = resultInList.getInetAddress().getHostAddress();
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        count++;
-                        if (count >= maxDisplayCount) {
-                            break;
-                        }
-                    }
-                    if (count < iEsptouchResults.size()) {
-                        try {
-                            jsonObject.put("downNum", (iEsptouchResults.size() - count));
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    if (listener != null && mDeviceCount != 1) {
-                        Message message = new Message();
-                        message.what = 106;
-                        message.obj = jsonObject.toString();
-                        mHandler.sendMessage(message);
-                        if (isUDPReceive) {
-                            startUDPRecieve(macAddress, ipAddress);
-                        }
-                    }
-                } else {
-                    if (listener != null) {
-                        mHandler.sendEmptyMessage(107);
-                    }
+            if (iEsptouchResults == null) {
+                //端口可能被其它程序占用
+                return;
+            }
+            //检查任务是否取消或者没有收到结果
+            IEsptouchResult result = iEsptouchResults.get(0);
+            if (result.isCancelled()) {
+                return;
+            }
+            if (!result.isSuc()) {
+                //配网失败
+                mHandler.sendEmptyMessage(RESULT_CONFIG_FAILURE);
+                return;
+            }
+            //配网成功
+            StringBuilder builder = new StringBuilder();
+            for (IEsptouchResult touchResult : iEsptouchResults) {
+                String message = String.format("BSSID:%s-IP:%s", touchResult.getBssid(),
+                        touchResult.getInetAddress().getHostName());
+                builder.append(message).append("\n");
+                if (isCustomUdpReceiver) {
+                    startReceiverData(touchResult.getInetAddress().getHostName());
                 }
             }
-
+            if (mDeviceCount != 1) {
+                Message message = Message.obtain();
+                message.what = RESULT_CONFIG_MULTI_SUCCESS;
+                message.obj = builder.toString();
+                mHandler.sendMessage(message);
+            }
         }
-
     }
 
-    private void startUDPRecieve(final String macAddress, final String ipAddress) {
-
-        mThread = new Thread(new Runnable() {
+    private void startReceiverData(final String ip) {
+        final Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-
-                Timer timer = new Timer();
-                timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        isReceive = false;
-                        if (listener != null && isUDPReceiveFail) {
-                            mHandler.sendEmptyMessage(109);
-                        }
-                    }
-                }, timesOut * 1000);
-
                 try {
-                    channel = DatagramChannel.open();
-                    channel.configureBlocking(false);
-                    channel.socket().setReuseAddress(false);
-                    channel.socket().bind(new InetSocketAddress(mPort));
-
-                    selector = Selector.open();
-                    channel.register(selector, SelectionKey.OP_READ);
-                } catch (IOException e) {
-                    e.printStackTrace();
-
-                }
-                ByteBuffer byteBuffer = ByteBuffer.allocate(640);
-                while (isReceive) {
-                    try {
-                        if (selector == null) {
-                            return;
-                        }
-                        int n = selector.select();
-                        if (n > 0) {
-                            Iterator iterator = selector.selectedKeys().iterator();
-                            while (iterator.hasNext()) {
-                                SelectionKey key = (SelectionKey) iterator.next();
-                                iterator.remove();
-                                if (key.isReadable()) {
-                                    DatagramChannel dataChannel = (DatagramChannel) key.channel();
-                                    byteBuffer.clear();
-                                    InetSocketAddress address = (InetSocketAddress) dataChannel.receive(byteBuffer);
-                                    String message = new String(byteBuffer.array(), 0, byteBuffer.position());
-                                    if (address.getAddress().getHostAddress().equalsIgnoreCase(ipAddress)) {
-                                        Log.e(TAG, "address.getAddress().getHostAddress():" + address.getAddress().getHostAddress());
-                                        Message message1 = new Message();
-                                        message1.what = 105;
-                                        message1.obj = message;
-                                        mHandler.sendMessage(message1);
-                                    }
-
-                                }
-                            }
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    // 绑定了指定的端口
+                    DatagramSocket socket = new DatagramSocket(mPort);
+                    // 创建一个用来接受发来的数据报的数据报包
+                    DatagramPacket datagramPacket = new DatagramPacket(new byte[1024], 1024);
+                    // 把收到的信息封装到DatagramPacket
+                    // 也是一个阻塞式方法。一直等到有人发来数据报
+                    socket.receive(datagramPacket);
+                    // 发送人
+                    InetAddress address = datagramPacket.getAddress();
+                    // 发送方的端口
+                    int port = datagramPacket.getPort();
+                    // 存储发送过来的数据的字节数组
+                    byte[] data = datagramPacket.getData();
+                    // 发送过来的信息的实际长度
+                    int length = datagramPacket.getLength();
+                    String resultMsg = new String(data, 0, length);
+                    Log.i(TAG, address + " " + port + "  " + resultMsg);
+                    if (ip.equals(address)) {
+                        Message message = Message.obtain();
+                        message.what = RESULT_CONFIG_RECEIVE_SUCCESS;
+                        message.obj = resultMsg;
+                        mHandler.sendMessage(message);
+                    } else {
+                        mHandler.sendEmptyMessage(RESULT_CONFIG_RECEIVE_FAILURE);
                     }
+                } catch (SocketException e) {
+                    mHandler.sendEmptyMessage(RESULT_CONFIG_RECEIVE_FAILURE);
+                } catch (IOException e) {
+                    mHandler.sendEmptyMessage(RESULT_CONFIG_RECEIVE_FAILURE);
                 }
             }
         });
-        mThread.start();
+        thread.start();
+        mCountDownTimer = new CountDownTimer(mTimeOut * 1000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+            }
+
+            @Override
+            public void onFinish() {
+                mHandler.sendEmptyMessage(RESULT_CONFIG_TIMEOUT);
+                if (thread != null) {
+                    thread.interrupt();
+                }
+            }
+        };
     }
 
     @Override
     public boolean handleMessage(Message msg) {
-        if (msg.what == 105) {
-            if (listener != null) {
-                isReceive = false;
-                isUDPReceiveFail = false;
-                String message = (String) msg.obj;
-                listener.onEsptouchTaskCallback(RESULT_CONFIG_RECEIVE_SUCCESS, message);
-            }
-        } else if (msg.what == 106) {
+        if (msg.what == RESULT_CONFIG_RECEIVE_SUCCESS) {
             String message = (String) msg.obj;
-            listener.onEsptouchTaskCallback(RESULT_CONFIG_MULTI_SUCCESS, message);
-        } else if (msg.what == 107) {
-            listener.onEsptouchTaskCallback(RESULT_CONFIG_FAILURE, "esptouch fail ...");
-        } else if (msg.what == 108) {
+            onEsptouchTaskListener.onEsptouchTaskCallback(RESULT_CONFIG_RECEIVE_SUCCESS, message);
+        } else if (msg.what == RESULT_CONFIG_RECEIVE_FAILURE) {
+            onEsptouchTaskListener.onEsptouchTaskCallback(RESULT_CONFIG_RECEIVE_FAILURE, "receiver is error");
+        } else if (msg.what == RESULT_CONFIG_MULTI_SUCCESS) {
             String message = (String) msg.obj;
-            listener.onEsptouchTaskCallback(RESULT_CONFIG_SUCCESS, message);
-        } else if (msg.what == 109) {
-            listener.onEsptouchTaskCallback(RESULT_CONFIG_TIMEOUT, "can not recieve device message...");
+            onEsptouchTaskListener.onEsptouchTaskCallback(RESULT_CONFIG_MULTI_SUCCESS, message);
+        } else if (msg.what == RESULT_CONFIG_SUCCESS) {
+            String message = (String) msg.obj;
+            onEsptouchTaskListener.onEsptouchTaskCallback(RESULT_CONFIG_SUCCESS, message);
+        } else if (msg.what == RESULT_CONFIG_FAILURE) {
+            onEsptouchTaskListener.onEsptouchTaskCallback(RESULT_CONFIG_FAILURE, "esptouch fail ...");
+        } else if (msg.what == RESULT_CONFIG_TIMEOUT) {
+            onEsptouchTaskListener.onEsptouchTaskCallback(RESULT_CONFIG_TIMEOUT, "can not recieve device message...");
         }
         return true;
     }
@@ -391,8 +373,10 @@ public class AndEsptouch implements Callback {
      * 4:表示超过了设置超时时间，未接受到设备的UDP信息
      */
     public static final int RESULT_CONFIG_SUCCESS = 0x100;
-    public static final int RESULT_CONFIG_MULTI_SUCCESS = 0x101;
     public static final int RESULT_CONFIG_FAILURE = 0x102;
+    public static final int RESULT_CONFIG_MULTI_SUCCESS = 0x101;
     public static final int RESULT_CONFIG_RECEIVE_SUCCESS = 0x103;
     public static final int RESULT_CONFIG_TIMEOUT = 0x104;
+    public static final int RESULT_CONFIG_RECEIVE_FAILURE = 0x105;
+
 }

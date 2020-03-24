@@ -319,5 +319,4 @@ public class ByteUtil {
         test_combine2bytesToOne();
         test_parseBssid();
     }
-
 }

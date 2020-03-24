@@ -1,4 +1,5 @@
 package com.rairmmd.andesptouch.protocol;
+
 import com.rairmmd.andesptouch.util.ByteUtil;
 
 public class TouchData {

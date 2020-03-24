@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         etPassword = findViewById(R.id.et_password);
         Button btnConnect = findViewById(R.id.btn_connect);
         btnConnect.setOnClickListener(this);
-        String currentWifiSsid = AndEsptouchHelper.getInstance(this).getCurrentWifiSsid();
+        String currentWifiSsid = AndEsptouchHelper.getSSID(this);
         tvSsid.setText(String.format("当前WiFi：%s", currentWifiSsid));
         String password = SPUtils.getInstance().getString("password", "");
         etPassword.setText(password);
@@ -44,16 +44,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        String currentWifiSsid = AndEsptouchHelper.getInstance(this).getCurrentWifiSsid();
-        String bssid = AndEsptouchHelper.getInstance(this).getBSSID();
+        String currentWifiSsid = AndEsptouchHelper.getSSID(this);
+        String bssid = AndEsptouchHelper.getBSSID(this);
         String password = etPassword.getText().toString().trim();
         SPUtils.getInstance().put("password", password);
-        Log.i(TAG, "(MainActivity.java:51)-onClick:->"+currentWifiSsid);
-        Log.i(TAG, "(MainActivity.java:51)-onClick:->"+bssid);
-        Log.i(TAG, "(MainActivity.java:51)-onClick:->"+password);
-        andEsptouch = new AndEsptouch.Builder(this).setSsid(currentWifiSsid)
-                .setBssid(bssid).setPassWord(password).build();
-        andEsptouch.startEsptouchConfig();
+        Log.i(TAG, "(MainActivity.java:51)-onClick:->" + currentWifiSsid);
+        Log.i(TAG, "(MainActivity.java:51)-onClick:->" + bssid);
+        Log.i(TAG, "(MainActivity.java:51)-onClick:->" + password);
+        andEsptouch = new AndEsptouch.Builder(this).setSSID(currentWifiSsid)
+                .setBSSID(bssid).setPassWord(password).build();
+        andEsptouch.startConfig();
         andEsptouch.setOnEsptouchTaskListener(this);
         if (countDownTimer != null) {
             countDownTimer = null;
@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onDismiss(DialogInterface dialog) {
                 if (andEsptouch != null) {
-                    andEsptouch.stopEsptouchConfig();
+                    andEsptouch.stopConfig();
                 }
             }
         });
@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onDestroy() {
         super.onDestroy();
         if (andEsptouch != null) {
-            andEsptouch.stopEsptouchConfig();
+            andEsptouch.stopConfig();
         }
     }
 }
