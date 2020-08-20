@@ -313,7 +313,7 @@ public class __EsptouchTask implements __IEsptouchTask {
         }
         // generator the esptouch byte[][] to be transformed, which will cost
         // some time(maybe a bit much)
-       IEsptouchGenerator generator = new EsptouchGenerator(mApSsid, mApBssid,
+        IEsptouchGenerator generator = new EsptouchGenerator(mApSsid, mApBssid,
                 mApPassword, localInetAddress, mEncryptor);
         // listen the esptouch result asyn
         __listenAsyn(mParameter.getEsptouchResultTotalLen());

@@ -14,6 +14,7 @@ import java.util.List;
  */
 public interface __IEsptouchTask {
 
+
     /**
      * Turn on or off the log.
      */

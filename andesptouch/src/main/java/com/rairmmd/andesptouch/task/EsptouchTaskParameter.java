@@ -31,7 +31,7 @@ public class EsptouchTaskParameter implements IEsptouchTaskParameter {
         mEsptouchResultIpLen = 4;
         mEsptouchResultTotalLen = 1 + 6 + 4;
         mPortListening = 18266;
-        mTargetPort = 7002;//7001
+        mTargetPort = 7654;
         mWaitUdpReceivingMilliseond = 15000;
         mWaitUdpSendingMillisecond = 45000;
         mThresholdSucBroadcastCount = 1;

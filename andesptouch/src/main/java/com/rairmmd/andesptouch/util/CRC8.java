@@ -11,11 +11,13 @@ public class CRC8 implements Checksum {
     static {
         for (int dividend = 0; dividend < 256; dividend++) {
             int remainder = dividend;// << 8;
-            for (int bit = 0; bit < 8; ++bit)
-                if ((remainder & 0x01) != 0)
+            for (int bit = 0; bit < 8; ++bit) {
+                if ((remainder & 0x01) != 0) {
                     remainder = (remainder >>> 1) ^ CRC_POLYNOM;
-                else
+                } else {
                     remainder >>>= 1;
+                }
+            }
             crcTable[dividend] = (short) remainder;
         }
     }

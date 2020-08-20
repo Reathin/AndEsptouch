@@ -1,7 +1,5 @@
 package com.rairmmd.andesptouch.security;
 
-import com.rairmmd.andesptouch.security.ITouchEncryptor;
-
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
