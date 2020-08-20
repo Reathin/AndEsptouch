@@ -3,8 +3,8 @@ package com.rair.andesptouch.utils;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.annotation.NonNull;
-import android.support.v4.util.SimpleArrayMap;
+import androidx.annotation.NonNull;
+import androidx.collection.SimpleArrayMap;
 import android.util.Base64;
 
 import java.io.ByteArrayInputStream;

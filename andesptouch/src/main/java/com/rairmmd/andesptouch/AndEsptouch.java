@@ -68,7 +68,7 @@ public class AndEsptouch implements Callback {
     private boolean isReceive = true;
     private boolean isUDPReceiveFail = true;
 
-    private int timesOut;
+    private int mTimeOut;
 
     private Thread mThread;
 
@@ -157,7 +157,7 @@ public class AndEsptouch implements Callback {
         byte[] count = ByteUtil.getBytesByString(String.valueOf(mDeviceCount));
         mEsptouchTaskTemp.execute(ssid, bssid, password, count);
         isUDPReceive = true;
-        this.timesOut = timesOut;
+        this.mTimeOut = timesOut;
         this.mPort = port;
     }
 
@@ -233,7 +233,7 @@ public class AndEsptouch implements Callback {
                             message.obj = jsonObject.toString();
                             mHandler.sendMessage(message);
                             if (isUDPReceive) {
-                                startUDPRecieve(result.getBssid(), result.getInetAddress().getHostAddress());
+                                startUDPRecieve(result.getInetAddress().getHostAddress());
                             }
                         }
                     }
@@ -280,7 +280,7 @@ public class AndEsptouch implements Callback {
                         message.obj = jsonObject.toString();
                         mHandler.sendMessage(message);
                         if (isUDPReceive) {
-                            startUDPRecieve(macAddress, ipAddress);
+                            startUDPRecieve(ipAddress);
                         }
                     }
                 } else {
@@ -294,7 +294,7 @@ public class AndEsptouch implements Callback {
 
     }
 
-    private void startUDPRecieve(final String macAddress, final String ipAddress) {
+    private void startUDPRecieve(final String ipAddress) {
 
         mThread = new Thread(new Runnable() {
             @Override
@@ -309,7 +309,7 @@ public class AndEsptouch implements Callback {
                             mHandler.sendEmptyMessage(109);
                         }
                     }
-                }, timesOut * 1000);
+                }, mTimeOut * 1000);
 
                 try {
                     channel = DatagramChannel.open();

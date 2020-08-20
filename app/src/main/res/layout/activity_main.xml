@@ -16,8 +16,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:layout_marginEnd="20dp"
         android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:gravity="center"
         android:orientation="vertical">
 
         <TextView
@@ -49,5 +50,13 @@
             android:text="配对设备"
             android:textColor="@color/white"
             android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="请手动打开应用位置权限，没有位置\n权限不能正常获取WiFi信息及配网。"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
     </LinearLayout>
 </RelativeLayout>

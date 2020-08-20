@@ -7,14 +7,14 @@ def siteUrl = 'https://github.com/Rairmmd/AndEsptouch'
 def gitUrl = 'https://github.com/Rairmmd/AndEsptouch.git'
 
 group = "com.rairmmd"
-version = "1.0.2"
+version = "1.0.4"
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 28
+        targetSdkVersion 30
     }
 }
 

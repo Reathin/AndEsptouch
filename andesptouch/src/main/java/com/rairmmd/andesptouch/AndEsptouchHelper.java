@@ -1,7 +1,6 @@
 package com.rairmmd.andesptouch;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
@@ -17,37 +16,35 @@ import java.util.List;
  */
 public class AndEsptouchHelper {
 
-    private final ConnectivityManager connectManager;
     /**
      * 声明Wifi管理对象
      */
-    private WifiManager wifiManager;
+    private WifiManager mWifiManager;
     /**
      * Wifi信息
      */
-    private WifiInfo wifiInfo;
+    private WifiInfo mWifiInfo;
     /**
      * 扫描出来的网络连接列表
      */
-    private List<ScanResult> scanResultList;
+    private List<ScanResult> mScanResultList;
     /**
      * 网络配置列表
      */
-    private List<WifiConfiguration> wifiConfigList;
+    private List<WifiConfiguration> mWifiConfigurationList;
     /**
      * Wifi锁
      */
-    private WifiManager.WifiLock wifiLock;
+    private WifiManager.WifiLock mWifiLock;
 
-    private static AndEsptouchHelper andEsptouchHelper;
+    private static AndEsptouchHelper mAndEsptouchHelper;
 
     public static AndEsptouchHelper getInstance(Context context) {
-        if (andEsptouchHelper == null) {
-            andEsptouchHelper = new AndEsptouchHelper(context);
+        if (mAndEsptouchHelper == null) {
+            mAndEsptouchHelper = new AndEsptouchHelper(context);
         }
-        return andEsptouchHelper;
+        return mAndEsptouchHelper;
     }
-
 
     /**
      * 构造函数
@@ -55,16 +52,15 @@ public class AndEsptouchHelper {
      * @param context 上下文
      */
     private AndEsptouchHelper(Context context) {
-        wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        connectManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        wifiInfo = wifiManager.getConnectionInfo();
+        mWifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        mWifiInfo = mWifiManager.getConnectionInfo();
     }
 
     /**
      * 获取WifiManager
      */
     public WifiManager getWifiManager() {
-        return wifiManager;
+        return mWifiManager;
     }
 
     /**
@@ -73,7 +69,7 @@ public class AndEsptouchHelper {
      * @return wifi是否可用
      */
     public boolean isEnabled() {
-        return wifiManager.isWifiEnabled();
+        return mWifiManager.isWifiEnabled();
     }
 
     /**
@@ -81,9 +77,9 @@ public class AndEsptouchHelper {
      *
      * @return 是否打开
      */
-    public boolean openWifi() {
+    public boolean isOpen() {
         if (!isEnabled()) {
-            return wifiManager.setWifiEnabled(true);
+            return mWifiManager.setWifiEnabled(true);
         } else {
             return false;
         }
@@ -94,11 +90,11 @@ public class AndEsptouchHelper {
      *
      * @return 是否关闭
      */
-    public boolean closeWifi() {
+    public boolean isClose() {
         if (!isEnabled()) {
             return true;
         } else {
-            return wifiManager.setWifiEnabled(false);
+            return mWifiManager.setWifiEnabled(false);
         }
     }
 
@@ -107,7 +103,7 @@ public class AndEsptouchHelper {
      * 锁定WiFI就是判断wifi是否建立成功，在这里使用的是held(握手) acquire
      */
     public void lockWifi() {
-        wifiLock.acquire();
+        mWifiLock.acquire();
     }
 
 
@@ -115,9 +111,9 @@ public class AndEsptouchHelper {
      * 解锁wifi
      */
     public void unLockWifi() {
-        if (!wifiLock.isHeld()) {
+        if (!mWifiLock.isHeld()) {
             // 释放资源
-            wifiLock.release();
+            mWifiLock.release();
         }
     }
 
@@ -126,7 +122,15 @@ public class AndEsptouchHelper {
      */
     public void createWifiLock() {
         // 创建一个锁的标志
-        wifiLock = wifiManager.createWifiLock("flyfly");
+        mWifiLock = mWifiManager.createWifiLock("flyfly");
+    }
+
+    /**
+     * 创建一个Wifi锁，需要时调用
+     */
+    public void createWifiLock(String tag) {
+        // 创建一个锁的标志
+        mWifiLock = mWifiManager.createWifiLock(tag);
     }
 
     /**
@@ -134,20 +138,16 @@ public class AndEsptouchHelper {
      */
     public String lookupScanInfo() {
         StringBuilder scanBuilder = new StringBuilder();
-        if (scanResultList == null) {
+        if (mScanResultList == null) {
             return "";
         }
-        for (int i = 0; i < scanResultList.size(); i++) {
-            ScanResult sResult = scanResultList.get(i);
-            scanBuilder.append("编号：" + (i + 1));
-            scanBuilder.append(" ");
-            //所有信息
-            scanBuilder.append(sResult.toString());
+        for (ScanResult scanResult : mScanResultList) {
+            scanBuilder.append(scanResult.toString());
             scanBuilder.append("\n");
         }
-        scanBuilder.append("--------------华丽分割线--------------------");
-        for (int i = 0; i < wifiConfigList.size(); i++) {
-            scanBuilder.append(wifiConfigList.get(i).toString());
+        scanBuilder.append("----------------------------------");
+        for (WifiConfiguration wifiConfiguration : mWifiConfigurationList) {
+            scanBuilder.append(wifiConfiguration.toString());
             scanBuilder.append("\n");
         }
         return scanBuilder.toString();
@@ -156,8 +156,8 @@ public class AndEsptouchHelper {
     /**
      * 获取指定Wifi的信号强度
      */
-    public int getLevel(int netId) {
-        return scanResultList.get(netId).level;
+    public int getLevel(int position) {
+        return mScanResultList.get(position).level;
     }
 
 
@@ -167,23 +167,22 @@ public class AndEsptouchHelper {
      * @return mac地址
      */
     public String getMac() {
-        return (wifiInfo == null) ? "" : wifiInfo.getMacAddress();
+        return (mWifiInfo == null) ? "" : mWifiInfo.getMacAddress();
     }
 
     public String getBSSID() {
-        wifiInfo = wifiManager.getConnectionInfo();
-        return (wifiInfo == null) ? null : wifiInfo.getBSSID();
+        return (mWifiInfo == null) ? null : mWifiInfo.getBSSID();
     }
 
     public String getSSID() {
-        return (wifiInfo == null) ? null : wifiInfo.getSSID();
+        return (mWifiInfo == null) ? null : mWifiInfo.getSSID();
     }
 
     /**
      * 返回当前连接的网络的ID
      */
-    public int getCurrentNetId() {
-        return (wifiInfo == null) ? null : wifiInfo.getNetworkId();
+    public int getNetWorkId() {
+        return (mWifiInfo == null) ? null : mWifiInfo.getNetworkId();
     }
 
     /**
@@ -191,25 +190,24 @@ public class AndEsptouchHelper {
      */
     public WifiInfo getWifiInfo() {
         // 得到连接信息
-        wifiInfo = wifiManager.getConnectionInfo();
-        return (wifiInfo == null) ? null : wifiInfo;
+        return mWifiInfo;
     }
 
     /**
      * 获取IP地址
      */
     public int getIP() {
-        return (wifiInfo == null) ? null : wifiInfo.getIpAddress();
+        return (mWifiInfo == null) ? null : mWifiInfo.getIpAddress();
     }
 
     /**
      * 添加一个连接
      *
-     * @param config wifi配置
+     * @param wifiConfiguration wifi配置
      */
-    public boolean addNetWordLink(WifiConfiguration config) {
-        int netId = wifiManager.addNetwork(config);
-        return wifiManager.enableNetwork(netId, true);
+    public boolean addNetWordLink(WifiConfiguration wifiConfiguration) {
+        int netId = mWifiManager.addNetwork(wifiConfiguration);
+        return mWifiManager.enableNetwork(netId, true);
     }
 
     /**
@@ -218,8 +216,8 @@ public class AndEsptouchHelper {
      * @param netId
      */
     public boolean disableNetWordLink(int netId) {
-        wifiManager.disableNetwork(netId);
-        return wifiManager.disconnect();
+        mWifiManager.disableNetwork(netId);
+        return mWifiManager.disconnect();
     }
 
     /**
@@ -227,8 +225,8 @@ public class AndEsptouchHelper {
      *
      * @param netId
      */
-    public boolean removeNetworkLink(int netId) {
-        return wifiManager.removeNetwork(netId);
+    public boolean removeNetWorkLink(int netId) {
+        return mWifiManager.removeNetwork(netId);
     }
 
     /**
@@ -237,7 +235,7 @@ public class AndEsptouchHelper {
      * @param netId
      */
     public void hiddenSSID(int netId) {
-        wifiConfigList.get(netId).hiddenSSID = true;
+        mWifiConfigurationList.get(netId).hiddenSSID = true;
     }
 
     /**
@@ -246,17 +244,16 @@ public class AndEsptouchHelper {
      * @param netId
      */
     public void displaySSID(int netId) {
-        wifiConfigList.get(netId).hiddenSSID = false;
+        mWifiConfigurationList.get(netId).hiddenSSID = false;
     }
 
     /**
      * 获取当前已连接的wifi名称
      */
-    public String getCurrentWifiSsid() {
+    public String getWifiSSID() {
         //得到连接信息
-        wifiInfo = wifiManager.getConnectionInfo();
-        String info = wifiInfo.toString();
-        String ssid = wifiInfo.getSSID();
+        String info = mWifiInfo.toString();
+        String ssid = mWifiInfo.getSSID();
         if (info.contains(ssid)) {
             return ssid;
         } else if (ssid.startsWith("\"") && ssid.endsWith("\"")) {

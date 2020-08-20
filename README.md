@@ -4,7 +4,7 @@
 
 #### 集成
 ```
-implementation 'com.rairmmd:andesptouch:1.0.0'
+implementation 'com.rairmmd:andesptouch:1.0.4'
 ```
 #### 需要的权限
 需要一下权限，库文件中已添加好了。
@@ -15,15 +15,16 @@ implementation 'com.rairmmd:andesptouch:1.0.0'
 <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 <uses-permission android:name="android.permission.INTERNET" />
 ```
+** ⚠️请注意适配高版本安卓，获取WiFi信息需要动态请求定位权限
+
 #### AndEsptouch
 ```
 AndEsptouch andEsptouch = new AndEsptouch.Builder(this)
-    .setSsid(currentWifiSsid)//WiFi名字 可通过AndEsptouchHelper获得
+    .setSsid(ssid)//WiFi名字 可通过AndEsptouchHelper获得
     .setBssid(bssid)//路由器mac地址 可通过AndEsptouchHelper获得
     .setPassWord(password)//WiFi密码
     .build();
 andEsptouch.startEsptouchConfig();
-showProgressDialog("努力配网中...");
 ```
 设置回调监听
 ```
@@ -57,7 +58,7 @@ andEsptouch.setOnEsptouchTaskListener(new AndEsptouch.OnEsptouchTaskListener() {
 WiFi操作工具类
 ```
 //获取当前WiFi
-String currentWifiSsid = AndEsptouchHelper.getInstance(this).getCurrentWifiSsid();
+String ssid = AndEsptouchHelper.getInstance(this).getWifiSsid();
 //获取mac地址
 String bssid = AndEsptouchHelper.getInstance(this).getBSSID();
 ```
