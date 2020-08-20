@@ -57,6 +57,32 @@ public class AndEsptouchHelper {
     }
 
     /**
+     * 获取SSID
+     */
+    public static String getSSID(Context context) {
+        WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        String info = wifiInfo.toString();
+        String ssid = wifiInfo.getSSID();
+        if (info.contains(ssid)) {
+            return ssid;
+        } else if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
+            return ssid.substring(1, ssid.length() - 1);
+        } else {
+            return ssid;
+        }
+    }
+
+    /**
+     * 获取BSSID
+     */
+    public static String getBSSID(Context context) {
+        WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        return wifiInfo.getBSSID();
+    }
+
+    /**
      * 获取WifiManager
      */
     public WifiManager getWifiManager() {

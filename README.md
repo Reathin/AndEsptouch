@@ -4,7 +4,7 @@
 
 #### 集成
 ```
-implementation 'com.rairmmd:andesptouch:1.0.4'
+implementation 'com.rairmmd:andesptouch:1.0.5'
 ```
 #### 需要的权限
 需要一下权限，库文件中已添加好了。
@@ -15,19 +15,22 @@ implementation 'com.rairmmd:andesptouch:1.0.4'
 <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 <uses-permission android:name="android.permission.INTERNET" />
 ```
-** ⚠️请注意适配高版本安卓，获取WiFi信息需要动态请求定位权限
+** ⚠️请注意适配高版本安卓，获取WiFi信息需要动态请求定位权限。
 
 #### AndEsptouch
-```
+```java
 AndEsptouch andEsptouch = new AndEsptouch.Builder(this)
-    .setSsid(ssid)//WiFi名字 可通过AndEsptouchHelper获得
-    .setBssid(bssid)//路由器mac地址 可通过AndEsptouchHelper获得
+    .setSSID(ssid)//WiFi名字 可通过AndEsptouchHelper获得
+    .setBSSID(bssid)//路由器mac地址 可通过AndEsptouchHelper获得
     .setPassWord(password)//WiFi密码
     .build();
-andEsptouch.startEsptouchConfig();
+andEsptouch.startConfig();
+
+//停止配置
+andEsptouch.stopConfig();
 ```
 设置回调监听
-```
+```java
 andEsptouch.setOnEsptouchTaskListener(new AndEsptouch.OnEsptouchTaskListener() {
     @Override
     public void onEsptouchTaskCallback(int code, String message) {
@@ -56,11 +59,13 @@ andEsptouch.setOnEsptouchTaskListener(new AndEsptouch.OnEsptouchTaskListener() {
 
 #### AndEsptouchHelper
 WiFi操作工具类
-```
+```java
 //获取当前WiFi
 String ssid = AndEsptouchHelper.getInstance(this).getWifiSsid();
+String ssid = AndEsptouchHelper.getSSID(this);
 //获取mac地址
 String bssid = AndEsptouchHelper.getInstance(this).getBSSID();
+String bssid = AndEsptouchHelper.getBSSID(this);
 ```
 还有其他例如：打开 关闭wifi  判断是否可用。。。
 

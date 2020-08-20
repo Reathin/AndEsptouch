@@ -52,9 +52,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.i(TAG, "(MainActivity.java:51)-onClick:->"+ssid);
         Log.i(TAG, "(MainActivity.java:51)-onClick:->"+bssid);
         Log.i(TAG, "(MainActivity.java:51)-onClick:->"+password);
-        andEsptouch = new AndEsptouch.Builder(this).setSsid(ssid)
-                .setBssid(bssid).setPassWord(password).build();
-        andEsptouch.startEsptouchConfig();
+        andEsptouch = new AndEsptouch.Builder(this).setSSID(ssid)
+                .setBSSID(bssid).setPassWord(password).build();
+        andEsptouch.startConfig();
         andEsptouch.setOnEsptouchTaskListener(this);
         if (countDownTimer != null) {
             countDownTimer = null;
@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onDismiss(DialogInterface dialog) {
                 if (andEsptouch != null) {
-                    andEsptouch.stopEsptouchConfig();
+                    andEsptouch.stopConfig();
                 }
             }
         });
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onDestroy() {
         super.onDestroy();
         if (andEsptouch != null) {
-            andEsptouch.stopEsptouchConfig();
+            andEsptouch.stopConfig();
         }
     }
 }
